@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Contains message_date_processor.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\message_date_processor\util\Util;
+
+/**
+ * Implements hook_help().
+ */
+function message_date_processor_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the message_date_processor module.
+    case 'help.page.message_date_processor':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Processes message text alert dates') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function message_date_processor_entity_insert(EntityInterface $entity) {
+  processMessageDate($entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function message_date_processor_entity_update(EntityInterface $entity) {
+  processMessageDate($entity, 'update');
+}
+
+/**
+ * processes message date on post insert or update
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ * @param string $operation
+ *
+ * operation type (insert or update)
+ */
+function processMessageDate(EntityInterface $entity, string $operation = 'insert'){
+  if ($entity->bundle() == 'community'){
+    $msgDateProcessorService = Drupal::service('message_date_processor');
+
+    if ($operation == 'update'){
+      $msgDateProcessorService->removeMessageDate($entity->id());
+    }
+
+    foreach ($entity->field_posting_message_date->getValue() as  $messageDate){
+      $checkedDate = Util::checkDate($messageDate['value']);
+      if ($checkedDate['valid']){
+        $values = [
+          'nid' => $entity->id(),
+          'message_date' => $checkedDate['alert_time'],
+          'processed' => 0
+        ];
+        $msgDateProcessorService->addMessageDate($values);
+      }
+    }
+  }
+}

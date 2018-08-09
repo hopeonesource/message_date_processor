@@ -1,0 +1,5 @@
+name: 'message date processor'
+type: module
+description: 'Processes message text alert dates'
+core: 8.x
+package: 'hos'

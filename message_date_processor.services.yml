@@ -1,0 +1,4 @@
+services:
+  message_date_processor:
+    class: Drupal\message_date_processor\MessageDateService
+    arguments: ['@database']
